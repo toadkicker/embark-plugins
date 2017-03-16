@@ -114,6 +114,10 @@
 <script src="node_modules/handlebars/dist/handlebars.min.js"></script>
 
 <script id="searchbox">
+  //  var searchUrl = 'http://npmsearch.com/query' /* seems unable to talk to elasticsearch */
+  var searchUrl = 'http://localhost:8080/query';
+
+
   //https://davidwalsh.name/javascript-debounce-function
   function debounce(func, wait, immediate) {
     var timeout;
@@ -130,8 +134,6 @@
     };
   }
 
-  var searchUrl = 'http://localhost:8080/query';
-//  var searchUrl = 'http://npmsearch.com/query' /* seems unable to talk to elasticsearch */
 
   var doSearch = function () {
     var queryVal = "embark-plugin-" + jQuery('#search').val();
