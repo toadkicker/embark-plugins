@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Bare - Start Bootstrap Template</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="node_modules/tether/dist/css/tether.min.css" rel="stylesheet">
+    <link href="node_modules/tether/dist/css/tether-theme-basic.min.css" rel="stylesheet">
+    <link href="node_modules/bootstrap/dist/css/bootstrap-grid.css" rel="stylesheet">
+    <link href="node_modules/bootstrap/dist/css/bootstrap-reboot.css" rel="stylesheet">
+    <link href="node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="css/wired.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-dark bg-primary">
+    <button class="navbar-toggler hidden-md-up pull-xs-right" data-target="#collapsed-bg-inverse" data-toggle="collapse"
+            type="button"><i class="fa fa-bars"></i></button>
+    <div class="collapse navbar-toggleable-sm" id="collapsed-bg-inverse">
+        <ul class="nav navbar-nav">
+            <li class="nav-item active"><a class="nav-link" href="#">Home<span class="sr-only" current=""></span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://embark.readthedocs.io" target="_blank">Docs</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="https://github.com/iurimatias/embark-framework" target="_blank">
+                    <i class="fa fa-github"></i>
+                    Github
+                </a>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="#">About</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Page Content -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <div class="mt-5 jumbotron">
+                <h1 class="display-3">Embark Plugins</h1>
+                <p class="lead">Find and share plugins for the Embark community</p>
+            </div>
+            <div class="mt-1">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input id="search" type="search" class="form-control" placeholder="Find Plugins">
+                        <span class="input-group-btn">
+                            <button class="btn btn-secondary" type="button"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div id="results" class="col-lg-12">
+
+        </div>
+    </div>
+
+</div>
+<script type="text/x-handlebars-template" id="result-tmpl">
+    <div class="card">
+        <h3 class="card-header">{{name}}</h3>
+        <div class="card-block">
+            <h4 class="card-title">{{author}}</h4>
+            <p class="card-text">{{description}}</p>
+            <a href="{{homepage}}" target="_blank">homepage</a>
+        </div>
+        <div class="card-footer text-muted">
+            {{keywords}}
+        </div>
+    </div>
+    <div class="result {{resultClass}}">
+        <h1>{{name}}</h1>
+
+    </div>
+</script>
+<script type="text/x-handlebars-template" id="result-err-tmpl">
+    <div class="alert {{level}} alert-dismissible fade in" role="alert">
+        <button aria-label="Close" class="close" data-dismiss="alert" type="button">
+            <span aria-hidden="true"><i class="fa fa-close"></i> </span>
+        </button>
+        <strong>{{title}}</strong>{{message}}
+    </div>
+</script>
+
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+<script src="node_modules/tether/dist/js/tether.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="node_modules/handlebars/dist/handlebars.min.js"></script>
+
+<script id="searchbox">
+  //https://davidwalsh.name/javascript-debounce-function
+  function debounce(func, wait, immediate) {
+    var timeout;
+    return function () {
+      var context = this, args = arguments;
+      var later = function () {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  }
+
+  var searchUrl = 'http://localhost:8080/query';
+//  var searchUrl = 'http://npmsearch.com/query' /* seems unable to talk to elasticsearch */
+
+  var doSearch = function () {
+    var queryVal = "embark-plugin-" + jQuery('#search').val();
+    debounce(
+      jQuery.getJSON({
+        url: searchUrl,
+        data: {
+          q: queryVal,
+        },
+        error: function (data) {
+          var results = jQuery("#results");
+          results.html("");
+          var source = jQuery("#result-err-tmpl").html();
+          var template = Handlebars.compile(source);
+          var result = template({
+            level: data.status <= 500 ? 'alert-danger' : 'alert-warning',
+            title: data.status <= 500 ? 'Danger: ' : 'Warning: ',
+            message: data.responseText
+          });
+
+          results.append(result);
+        },
+        success: function (data) {
+          var results = jQuery("#results");
+          results.html("");
+          var source, template, result;
+          for (var i = 0; data.results.length > i; i++) {
+            if(data.results[i] == null) {
+              source = jQuery("#result-err-tmpl").html();
+              template = Handlebars.compile(source);
+              result = template({
+                level: 'alert-warning',
+                title: 'Warning: ',
+                message: "Null values provided"
+              });
+            } else {
+              source = jQuery("#result-tmpl").html();
+              template = Handlebars.compile(source);
+              result = template(data.results[i]);
+            }
+
+            results.append(result);
+          }
+        }
+      }), 500);
+  };
+
+  jQuery('#search').on('keyup', doSearch);
+  //send to server
+  //    jQuery.getJSON('http://npmsearch.com/query', {
+  //        'q':
+  //    })
+</script>
+
+</body>
+
+</html>

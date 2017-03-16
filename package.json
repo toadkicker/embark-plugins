@@ -1,0 +1,32 @@
+{
+  "name": "embark-plugins",
+  "version": "1.0.0",
+  "description": "A website to help find embark plugins",
+  "main": "index.html",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toadkicker/embark-plugins.git"
+  },
+  "keywords": [
+    "embark",
+    "ethereum",
+    "dapps",
+    "plugins"
+  ],
+  "author": "Todd Baur",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/toadkicker/embark-plugins/issues"
+  },
+  "homepage": "https://github.com/toadkicker/embark-plugins#readme",
+  "dependencies": {
+    "bootstrap": "^4.0.0-alpha",
+    "fontawesome": "^4.7.2",
+    "handlebars": "^4.0.6",
+    "jquery": "^3.1.1",
+    "tether": "^1.4.0"
+  }
+}
