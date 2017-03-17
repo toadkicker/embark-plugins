@@ -116,7 +116,7 @@
 <script id="searchbox">
   //  var searchUrl = 'http://npmsearch.com/query' /* seems unable to talk to elasticsearch */
   var searchUrl = 'http://localhost:8080/query';
-
+  var results = jQuery("#results");
 
   //https://davidwalsh.name/javascript-debounce-function
   function debounce(func, wait, immediate) {
@@ -134,6 +134,16 @@
     };
   }
 
+  var flashMessage = function (opts) {
+    var source = jQuery("#result-err-tmpl").html();
+    var template = Handlebars.compile(source);
+    var result = template({
+      level: opts.level || 'warning',
+      title: opts.title || 'Warning: ',
+      message: opts.message || "Problem getting results from server detected."
+    });
+    results.append(result);
+  };
 
   var doSearch = function () {
     var queryVal = "embark-plugin-" + jQuery('#search').val();
@@ -142,39 +152,33 @@
         url: searchUrl,
         data: {
           q: queryVal,
+          fields: []
         },
         error: function (data) {
-          var results = jQuery("#results");
           results.html("");
-          var source = jQuery("#result-err-tmpl").html();
-          var template = Handlebars.compile(source);
-          var result = template({
+          var opts = {
             level: data.status <= 500 ? 'alert-danger' : 'alert-warning',
             title: data.status <= 500 ? 'Danger: ' : 'Warning: ',
             message: data.responseText
-          });
-
-          results.append(result);
+          };
+          flashMessage(opts);
         },
         success: function (data) {
-          var results = jQuery("#results");
           results.html("");
-          var source, template, result;
-          for (var i = 0; data.results.length > i; i++) {
-            if(data.results[i] == null) {
-              source = jQuery("#result-err-tmpl").html();
-              template = Handlebars.compile(source);
-              result = template({
-                level: 'alert-warning',
-                title: 'Warning: ',
-                message: "Null values provided"
-              });
-            } else {
-              source = jQuery("#result-tmpl").html();
-              template = Handlebars.compile(source);
-              result = template(data.results[i]);
-            }
 
+          if (data.total == 0) {
+            var opts = {
+              level: 'alert-info',
+              title: 'No Results',
+              message: " "
+            };
+            return flashMessage(opts)
+          }
+
+          for (var i = 0; data.results.length > i; i++) {
+            source = jQuery("#result-tmpl").html();
+            template = Handlebars.compile(source);
+            result = template(data.results[i]);
             results.append(result);
           }
         }
@@ -182,10 +186,7 @@
   };
 
   jQuery('#search').on('keyup', doSearch);
-  //send to server
-  //    jQuery.getJSON('http://npmsearch.com/query', {
-  //        'q':
-  //    })
+
 </script>
 
 </body>
