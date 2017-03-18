@@ -85,16 +85,20 @@
         <h3 class="card-header">{{name}}</h3>
         <div class="card-block">
             <h4 class="card-title">{{author}}</h4>
-            <p class="card-text">{{description}}</p>
+            <p class="card-text">{{{parsedDescription}}}</p>
             <a href="{{homepage}}" target="_blank">homepage</a>
+            <div class="readme">
+                {{{parsedReadme}}}
+            </div>
         </div>
         <div class="card-footer text-muted">
-            {{keywords}}
+            <p class="text-muted">keywords:&nbsp;
+                {{#each keywords}}
+                    {{this}}&nbsp;
+                {{/each}}
+            </p>
+            {{version}} : released {{lastUpdated}}
         </div>
-    </div>
-    <div class="result {{resultClass}}">
-        <h1>{{name}}</h1>
-
     </div>
 </script>
 <script type="text/x-handlebars-template" id="result-err-tmpl">
@@ -112,10 +116,14 @@
 <!-- Bootstrap Core JavaScript -->
 <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="node_modules/handlebars/dist/handlebars.min.js"></script>
+<script src="node_modules/moment/min/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.6.4/showdown.min.js"></script>
 
 <script id="searchbox">
-  //  var searchUrl = 'http://npmsearch.com/query' /* seems unable to talk to elasticsearch */
-  var searchUrl = 'http://localhost:8080/query';
+
+  var searchUrl = 'http://npmsearch.com/query';
+  /* seems unable to talk to elasticsearch */
+  //  var searchUrl = 'http://localhost:8080/query';
   var results = jQuery("#results");
 
   //https://davidwalsh.name/javascript-debounce-function
@@ -134,6 +142,12 @@
     };
   }
 
+  var parseMarkdown = function (text) {
+    var markdown = new showdown.Converter();
+    markdown.setFlavor('github');
+    return markdown.makeHtml(text);
+  };
+
   var flashMessage = function (opts) {
     var source = jQuery("#result-err-tmpl").html();
     var template = Handlebars.compile(source);
@@ -146,13 +160,13 @@
   };
 
   var doSearch = function () {
-    var queryVal = "embark-plugin-" + jQuery('#search').val();
+    var queryVal = jQuery('#search').val();
     debounce(
       jQuery.getJSON({
         url: searchUrl,
         data: {
-          q: queryVal,
-          fields: []
+          q: queryVal + '&keywords:embark, embark-plugin',
+          fields: ['name', 'readme', 'description', 'keywords', 'author', 'times.published', 'homepage', 'version', 'license', '_score'].join(',')
         },
         error: function (data) {
           results.html("");
@@ -176,8 +190,11 @@
           }
 
           for (var i = 0; data.results.length > i; i++) {
-            source = jQuery("#result-tmpl").html();
+            var source = jQuery("#result-tmpl").html();
             template = Handlebars.compile(source);
+            data.results[i].parsedReadme = parseMarkdown(data.results[i].readme[0]);
+            data.results[i].parsedDescription = parseMarkdown(data.results[i].description[0]);
+            data.results[i].lastUpdated = moment(data.results[i]['times.published'][0], "YYYYMMDD").fromNow();
             result = template(data.results[i]);
             results.append(result);
           }
