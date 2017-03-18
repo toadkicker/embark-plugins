@@ -192,8 +192,12 @@
           for (var i = 0; data.results.length > i; i++) {
             var source = jQuery("#result-tmpl").html();
             template = Handlebars.compile(source);
-            data.results[i].parsedReadme = parseMarkdown(data.results[i].readme[0]);
-            data.results[i].parsedDescription = parseMarkdown(data.results[i].description[0]);
+            if(data.results[i].readme){
+              data.results[i].parsedReadme = parseMarkdown(data.results[i].readme[0]);
+            }
+            if(data.results[i].description){
+              data.results[i].parsedDescription = parseMarkdown(data.results[i].description[0]);
+            }
             data.results[i].lastUpdated = moment(data.results[i]['times.published'][0], "YYYYMMDD").fromNow();
             result = template(data.results[i]);
             results.append(result);
